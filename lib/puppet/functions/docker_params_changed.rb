@@ -1,8 +1,29 @@
 # frozen_string_literal: true
 
 Puppet::Functions.create_function(:docker_params_changed) do
+  # --- Existing dispatch: returns the original String ("Param changed" / "No changes detected") ---
   dispatch :detect_changes do
     param 'Hash', :opts
+    return_type 'String'
+  end
+
+  # --- Back-compat structured variant you already added (returns a Hash). Keep if others use it. ---
+  dispatch :detect_changes_hash do
+    param 'Hash', :opts
+    param 'Enum["hash"]', :format
+    return_type 'Hash'
+  end
+
+  # --- New: typed field dispatches so manifests can defer exact types safely ---
+  dispatch :bool_field do
+    param 'Hash', :opts
+    param 'Enum["changed","noop"]', :field
+    return_type 'Boolean'
+  end
+
+  dispatch :string_field do
+    param 'Hash', :opts
+    param 'Enum["message","loglevel"]', :field
     return_type 'String'
   end
 
@@ -105,10 +126,13 @@ Puppet::Functions.create_function(:docker_params_changed) do
                         end
         param_changed = true if pp_paths != inspect_paths
 
-        names = inspect_hash['Mounts'].map { |item| item.values[1] } if inspect_hash['Mounts']
+        # FIXED: use explicit keys instead of item.values[n]
+        names = inspect_hash['Mounts'].map { |item| item['Name'] || item['Source'] } if inspect_hash['Mounts']
         pp_names = pp_mounts.map { |item| item.split(':')[0] } if pp_mounts
         names = names.select { |item| pp_names.include?(item) } if names && pp_names
-        destinations = inspect_hash['Mounts'].map { |item| item.values[3] } if inspect_hash['Mounts']
+
+        # FIXED: use 'Destination' key explicitly
+        destinations = inspect_hash['Mounts'].map { |item| item['Destination'] } if inspect_hash['Mounts']
         pp_destinations = pp_mounts.map { |item| item.split(':')[1] } if pp_mounts && opts['osfamily'] != 'windows'
         pp_destinations = pp_mounts.map { |item| "#{item.split(':')[1].downcase}:#{item.split(':')[2]}" } if pp_mounts && opts['osfamily'] == 'windows'
         destinations = destinations.select { |item| pp_destinations.include?(item) } if destinations && pp_destinations
@@ -118,7 +142,6 @@ Puppet::Functions.create_function(:docker_params_changed) do
         param_changed = true if pp_mounts != [] && inspect_hash['Mounts'].nil?
 
         # check if something on ports was changed(some ports were added or removed)
-
         ports = inspect_hash['HostConfig']['PortBindings'].keys
         ports = ports.map { |item| item.split('/')[0] }
         pp_ports = opts['ports'].sort if opts['ports'].is_a?(Array)
@@ -152,4 +175,39 @@ Puppet::Functions.create_function(:docker_params_changed) do
 
     return_value
   end
+
+  def detect_changes_hash(opts, _format)
+    msg = detect_changes(opts)
+    changed = (msg != 'No changes detected')
+    {
+      'changed'  => changed,
+      'message'  => changed ? msg : '',
+      'loglevel' => changed ? 'notice' : 'debug',
+      'noop'     => !changed,
+    }
+  end
+
+  # ---- New typed-field dispatch implementations ----
+  def bool_field(opts, field)
+    msg = detect_changes(opts)
+    changed = (msg != 'No changes detected')
+    case field
+    when 'changed'
+      changed
+    when 'noop'
+      !changed
+    end
+  end
+
+  def string_field(opts, field)
+    msg = detect_changes(opts)
+    changed = (msg != 'No changes detected')
+    case field
+    when 'message'
+      changed ? msg : ''
+    when 'loglevel'
+      changed ? 'notice' : 'debug'
+    end
+  end
 end
+
