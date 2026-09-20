@@ -467,41 +467,41 @@ define docker::run (
           # },
         }
 
-	# Cross-platform true/false commands for Exec guards and no-op run
-	$noop_true_cmd  = $facts['os']['family'] ? {
-	  'windows' => 'cmd.exe /c exit 0',
-	  default   => '/bin/true',
-	}
-	$noop_false_cmd = $facts['os']['family'] ? {
-	  'windows' => 'cmd.exe /c exit 1',
-	  default   => '/bin/false',
-	}
+        # Cross-platform true/false commands for Exec guards and no-op run
+        $noop_true_cmd = $facts['os']['family'] ? {
+          'windows' => 'cmd.exe /c exit 0',
+          default   => '/bin/true',
+        }
+        $noop_false_cmd = $facts['os']['family'] ? {
+          'windows' => 'cmd.exe /c exit 1',
+          default   => '/bin/false',
+        }
 
-	# Boolean "changed?" evaluated on the agent (this calls your function and applies side effects)
-	$container_changed = Deferred('docker_params_changed', [$docker_params_changed_args, 'changed'])
+        # Boolean "changed?" evaluated on the agent (this calls the function and applies side effects)
+        $container_changed = Deferred('docker_params_changed', [$docker_params_changed_args, 'changed'])
 
-	# Build the guard command:
-	# - when changed == true  => guard is /bin/false (so Exec runs and emits a refresh)
-	# - when changed == false => guard is /bin/true  (so Exec is skipped; no refresh/no noise)
-	$change_guard_cmd = Deferred('inline_epp', [
-	  '<% if $changed { %><%= $false_cmd %><% } else { %><%= $true_cmd %><% } %>',
-	  {
-	    'changed'   => $container_changed,
-	    'true_cmd'  => $noop_true_cmd,
-	    'false_cmd' => $noop_false_cmd,
-	  },
-	])
+        # Build the guard command:
+        # - when changed == true  => guard is /bin/false (so Exec runs and emits a refresh)
+        # - when changed == false => guard is /bin/true  (so Exec is skipped; no refresh/no noise)
+        $change_guard_cmd = Deferred('inline_epp', [
+            '<% if $changed { %><%= $false_cmd %><% } else { %><%= $true_cmd %><% } %>',
+            {
+              'changed'   => $container_changed,
+              'true_cmd'  => $noop_true_cmd,
+              'false_cmd' => $noop_false_cmd,
+            },
+        ])
 
-	# Event source: harmless exec that only "changes" when the function found changes.
-	exec { "${title}_docker_params_change_event":
-	  command     => $noop_true_cmd,     # runs instantly, does nothing
-	  unless      => $change_guard_cmd,  # skips when unchanged
-	  environment => $exec_environment,  # keep your existing vars
-	  path        => $exec_path,
-	  provider    => $exec_provider,
-	  timeout     => $exec_timeout,
-	  logoutput   => 'on_failure',       # keep logs quiet
-	}
+        # Event source: harmless exec that only "changes" when the function found changes.
+        exec { "${title}_docker_params_change_event":
+          command     => $noop_true_cmd,
+          unless      => $change_guard_cmd,
+          environment => $exec_environment,
+          path        => $exec_path,
+          provider    => $exec_provider,
+          timeout     => $exec_timeout,
+          logoutput   => 'on_failure',
+        }
       }
     }
   } else {

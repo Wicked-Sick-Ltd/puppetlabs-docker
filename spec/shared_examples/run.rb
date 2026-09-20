@@ -441,24 +441,16 @@ shared_examples 'run' do |title, params, facts, defaults|
         }
       end
     else
-      docker_params_changed_args = {
-        'sanitised_title' => sanitised_title,
-        'osfamily' => facts[:os]['family'],
-        'command' => run_with_docker_command.join(' '),
-        'cidfile' => cidfile,
-        'image' => image,
-        'volumes' => volumes,
-        'ports' => ports,
-        'stop_wait_time' => stop_wait_time,
-        'container_running' => running,
-        'logfile_path' => (facts[:os]['family'] == 'windows') ? facts['docker_user_temp_path'] : '/tmp'
-      }
-
-      detect_changes = get_docker_params_changed(docker_params_changed_args)
+      noop_true_cmd = (facts[:os]['family'] == 'windows') ? 'cmd.exe /c exit 0' : '/bin/true'
 
       it {
-        expect(subject).to contain_notify("#{title}_docker_params_changed").with(
-          'message' => detect_changes,
+        expect(subject).to contain_exec("#{title}_docker_params_change_event").with(
+          'command' => noop_true_cmd,
+          'environment' => exec_environment,
+          'path' => exec_path,
+          'provider' => exec_provider,
+          'timeout' => exec_timeout,
+          'logoutput' => 'on_failure',
         )
       }
     end

@@ -210,4 +210,3 @@ Puppet::Functions.create_function(:docker_params_changed) do
     end
   end
 end
-

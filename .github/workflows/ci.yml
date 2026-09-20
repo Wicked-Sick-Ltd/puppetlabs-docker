@@ -6,16 +6,24 @@ on:
       - "main"
   workflow_dispatch:
     
+permissions: {}
+
 jobs:
+  # No secrets are passed to the called workflows. The optional secrets they look for
+  # (PUPPET_FORGE_TOKEN(_PUBLIC), PUPPET_GEM_SOURCE, TWINGATE_PUBLIC_REPO_KEY) only gate
+  # puppetcore/Twingate access, which this module does not use: its Gemfile resolves from
+  # rubygems.org and metadata.json caps Puppet below 9.
   Spec:
     uses: "puppetlabs/cat-github-actions/.github/workflows/module_ci.yml@main"
+    permissions:
+      contents: "read"
     with:
       runs_on: "ubuntu-24.04"
-    secrets: "inherit"
 
   Acceptance:
     needs: Spec
     uses: "puppetlabs/cat-github-actions/.github/workflows/module_acceptance.yml@main"
+    permissions:
+      contents: "read"
     with:
       flags: '--provision-service'
-    secrets: "inherit"
