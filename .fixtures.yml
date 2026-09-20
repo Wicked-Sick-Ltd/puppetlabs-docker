@@ -10,8 +10,10 @@ fixtures:
       repo: 'https://github.com/puppetlabs/puppetlabs-puppet_agent.git'
       ref: v4.13.0
     provision: 'https://github.com/puppetlabs/provision.git'
-    yumrepo_core: 
+    yumrepo_core:
       repo: https://github.com/puppetlabs/puppetlabs-yumrepo_core.git
+      # v3.x uses Ruby 3.1 hash shorthand, which the Puppet 7 / Ruby 2.7 lane cannot parse.
+      ref: v2.1.0
       puppet_version: ">= 6.0.0"
   symlinks:
     docker: "#{source_dir}"
