@@ -6,10 +6,13 @@ on:
 permissions: {}
 
 jobs:
-  # `secrets: inherit` is still required here: module_release publishes with FORGE_API_KEY
-  # but does not declare it under `on.workflow_call.secrets`, so it cannot be passed by name.
+  # module_release publishes with secrets.FORGE_API_KEY but its trigger is a bare
+  # `on: workflow_call` with no secrets declared, so naming FORGE_API_KEY here is
+  # rejected as undefined; upstream documents that callers must inherit. Drop this
+  # once module_release declares FORGE_API_KEY under on.workflow_call.secrets.
   release:
     uses: "puppetlabs/cat-github-actions/.github/workflows/module_release.yml@main"
     permissions:
       contents: "write"  # module_release creates the GitHub release and uploads the built package
+    # nosemgrep: yaml.github-actions.security.secrets-inherit.secrets-inherit
     secrets: "inherit"

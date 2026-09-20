@@ -15,4 +15,9 @@ RUN sudo usermod -s $(which zsh) gitpod && \
     mkdir -p /home/gitpod/.config/puppet && \
     /opt/puppetlabs/puppet/bin/ruby -r yaml -e "puts ({'disabled' => true}).to_yaml" > /home/gitpod/.config/puppet/analytics.yml
 RUN rm -f puppet6-release-bionic.deb  puppet-tools-release-bionic.deb
+
+# gitpod/workspace-base creates gitpod (uid 33333, in the sudo group) and already
+# leaves it as the active user, which is why the builds above have to call sudo.
+# Restating it keeps the entrypoint off root if a future base image changes that.
+USER gitpod
 ENTRYPOINT /usr/bin/zsh

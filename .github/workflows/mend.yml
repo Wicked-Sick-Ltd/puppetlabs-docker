@@ -12,11 +12,14 @@ permissions: {}
 
 jobs:
 
-  # mend_ruby reads MEND_API_KEY and MEND_TOKEN from the repository secrets without
-  # declaring them under `on.workflow_call.secrets`, and the `secrets` context is not
-  # available in `with`, so inheriting is currently the only way to supply them.
+  # mend_ruby reads secrets.MEND_API_KEY and secrets.MEND_TOKEN but declares no
+  # `on.workflow_call.secrets`, so naming them here is rejected as undefined. Its
+  # api_key/token inputs are not a way out either: `secrets` is not one of the
+  # contexts available to `jobs.<id>.with`. Inheriting is the only option until
+  # mend_ruby declares those two secrets; revisit then.
   mend:
     uses: "puppetlabs/cat-github-actions/.github/workflows/mend_ruby.yml@main"
     permissions:
       contents: "read"
+    # nosemgrep: yaml.github-actions.security.secrets-inherit.secrets-inherit
     secrets: "inherit"
