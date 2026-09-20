@@ -7,9 +7,13 @@ on:
         description: "Module version to be released. Must be a valid semver string. (1.2.3)"
         required: true
 
+permissions: {}
+
 jobs:
   release_prep:
     uses: "puppetlabs/cat-github-actions/.github/workflows/module_release_prep.yml@main"
+    permissions:
+      contents: "write"  # module_release_prep commits the changelog/metadata updates to a branch
+      pull-requests: "write"  # ...and opens the release-prep pull request from that branch
     with:
       version: "${{ github.event.inputs.version }}"
-    secrets: "inherit"

@@ -3,7 +3,13 @@ name: "Publish module"
 on:
   workflow_dispatch:
   
+permissions: {}
+
 jobs:
-  release: 
+  # `secrets: inherit` is still required here: module_release publishes with FORGE_API_KEY
+  # but does not declare it under `on.workflow_call.secrets`, so it cannot be passed by name.
+  release:
     uses: "puppetlabs/cat-github-actions/.github/workflows/module_release.yml@main"
+    permissions:
+      contents: "write"  # module_release creates the GitHub release and uploads the built package
     secrets: "inherit"
