@@ -20,10 +20,15 @@ jobs:
     with:
       runs_on: "ubuntu-24.04"
 
+  # Acceptance needs VM targets: the tests install and run dockerd, which the litmus
+  # docker provisioner cannot host. The only VM provisioner in the matrix is
+  # provision_service, and matrix_from_metadata_v3 drops it outside the puppetlabs
+  # org, so forks are left with no usable provisioner and cannot run these tests.
   Acceptance:
     needs: Spec
+    if: "github.repository_owner == 'puppetlabs'"
     uses: "puppetlabs/cat-github-actions/.github/workflows/module_acceptance.yml@main"
     permissions:
       contents: "read"
     with:
-      flags: '--provision-service'
+      flags: '--provision-prefer provision_service --provision-exclude docker --arch-exclude arm --puppetlabs --nightly'
