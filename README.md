@@ -1039,3 +1039,15 @@ If you would like to contribute to this module, see the guidelines in [CONTRIBUT
 
 Acceptance tests for this module leverage [puppet_litmus](https://github.com/puppetlabs/puppet_litmus).
 To run the acceptance tests follow the instructions [here](https://github.com/puppetlabs/puppet_litmus/wiki/Tutorial:-use-Litmus-to-execute-acceptance-tests-with-a-sample-module-(MoTD)#install-the-necessary-gems-for-the-module).
+
+<!-- repository-guidance:begin -->
+## Contributing and agent guidance
+
+- [Contributor guide](CONTRIBUTING.md): development workflow and validation.
+- [Agent instructions](AGENTS.md): shared guidance for Codex and other coding agents.
+- [Security policy](SECURITY.md): private vulnerability reporting.
+
+## Repository license
+
+Existing upstream license terms and notices remain in force; see [LICENSE](LICENSE).
+<!-- repository-guidance:end -->
